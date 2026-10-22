@@ -602,4 +602,17 @@
     <string name="update_later">Later</string>
     <string name="game_settings_title">Game Settings</string>
     <string name="game_settings_desc">Per-game launcher options</string>
+    <string name="nav_lobbies">Lobbies</string>
+    <string name="lobby_title">Modded lobbies</string>
+    <string name="lobby_refresh">Refresh</string>
+    <string name="lobby_game_version">Game version</string>
+    <string name="lobby_version_invalid">Use the form year.month.day, for example 2026.9.9</string>
+    <string name="lobby_all_regions">All regions</string>
+    <string name="lobby_none">No public lobbies right now</string>
+    <string name="lobby_error">Could not load lobbies: %1$s</string>
+    <string name="lobby_count">%1$d lobbies</string>
+    <string name="lobby_details">%1$s · %2$s · %3$d impostors</string>
+    <string name="lobby_players">%1$d/%2$d</string>
+    <string name="lobby_copy_code">Copy code</string>
+    <string name="lobby_code_copied">Code %1$s copied</string>
 </resources>
