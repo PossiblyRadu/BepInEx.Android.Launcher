@@ -1,151 +1,168 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- App -->
-    <string name="app_name">Mira Manager</string>
-    <string name="app_tagline">Mira Manager</string>
+package com.bepinex.android
 
-    <!-- Navigation -->
-    <string name="nav_games">Games</string>
-    <string name="nav_modpacks">Profiles</string>
-    <string name="nav_market">Market</string>
-    <string name="nav_settings">Settings</string>
-    <string name="nav_about">About</string>
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
+import android.os.Build
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.zip.ZipFile
 
-    <!-- Game Detection -->
-    <string name="scan_title">PlantsVsZombiesRH</string>
-    <string name="scanning">Checking PlantsVsZombiesRH…</string>
-    <string name="no_games_found">PlantsVsZombiesRH Not Found</string>
-    <string name="no_games_hint">Install Plants vs. Zombies: Fusion, then tap Rescan. The package name is com.LanPiaoPiao.PlantsVsZombiesRH.</string>
-    <string name="scan_again">Scan Again</string>
-    <string name="rescan">Rescan</string>
+/**
+ * Auto-detects Unity IL2CPP games installed on the device.
+ *
+ * Uses [PackageManager.queryIntentActivities] with MAIN/LAUNCHER intent
+ * to discover launchable apps without requiring QUERY_ALL_PACKAGES permission.
+ * The corresponding `<queries>` declaration in AndroidManifest.xml makes this
+ * work on Android 11+ without any runtime permission dialogs.
+ *
+ * Detection algorithm:
+ *   1. Query all launchable activities via PackageManager
+ *   2. Deduplicate by package name, skip system + our own app
+ *   3. For each candidate APK, open as ZIP and check for libil2cpp.so
+ */
+object GameDetector {
 
-    <!-- Framework Status -->
-    <string name="framework_ready">BepInEx Ready</string>
-    <string name="framework_setting_up">Setting up…</string>
-    <string name="framework_setup_failed">Setup failed</string>
-    <string name="framework_setup_failed_permission">All files access is required to extract BepInEx</string>
-    <string name="framework_retry">Retry setup</string>
-    <string name="extracting">Extracting BepInEx…</string>
-    <string name="mod_count">%d mod(s)</string>
+    private const val TAG = "GameDetector"
 
-    <!-- Actions -->
-    <string name="import_mod">Import Mod</string>
-    <string name="launch">Launch</string>
-    <string name="game_manage_saves">Manage Saves</string>
-    <string name="game_manage_saves_desc">Manage backups and restores for this game</string>
-    <string name="refresh">Refresh</string>
-    <string name="delete">Delete</string>
+    /** Package name of Among Us on Android. */
+    const val AMONG_US_PACKAGE = "com.innersloth.spacemafia"
 
-    <!-- Mods -->
-    <string name="installed_mods">Installed Mods</string>
-    <string name="no_mods_installed">No Mods Installed</string>
-    <string name="no_mods_hint">Tap Import Mod to add a .dll file</string>
-    <string name="mod_deleted">Deleted: %s</string>
-    <string name="mod_imported">Imported: %s</string>
-    <string name="import_failed">Import failed</string>
+    /** ABI directories to scan for libil2cpp.so */
+    private val UNITY_ABIS = listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
 
-    <!-- Modpacks -->
-    <string name="modpack_title">Profiles</string>
-    <string name="modpack_create">Create Profile</string>
-    <string name="modpack_create_action">Create</string>
-    <string name="modpack_import_action">Import</string>
-    <string name="modpack_actions">Profile actions</string>
-    <string name="modpack_actions_close">Close actions</string>
-    <string name="modpack_delete">Delete Profile</string>
-    <string name="modpack_rename">Rename</string>
-    <string name="modpack_rename_failed">The name is invalid or already exists</string>
-    <string name="modpack_edit">Edit Profile</string>
-    <string name="modpack_icon">Icon</string>
-    <string name="modpack_icon_hint">Tap to pick an image</string>
-    <string name="modpack_shortcut">Desktop Shortcut</string>
-    <string name="modpack_shortcut_desc">Create a shortcut to launch this profile directly</string>
-    <string name="modpack_shortcut_create">Create Desktop Shortcut</string>
-    <string name="modpack_shortcut_enabled">Desktop Shortcut Enabled</string>
-    <string name="shortcut_permission_required">Shortcut permission not granted. Opening settings…</string>
-    <string name="shortcut_permission_title">Permission Required</string>
-    <string name="shortcut_permission_guide">Creating desktop shortcuts requires the \"Home screen shortcut\" permission. Please enable it in the settings page that opens next.</string>
-    <string name="shortcut_permission_open_settings">Open Settings</string>
-    <string name="modpack_vanilla_desc">No mods loaded</string>
-    <string name="modpack_empty">No profiles installed</string>
-    <string name="modpack_switching">Switching profile…</string>
-    <string name="launch_wait_modpack_switch">Wait for the profile switch to finish</string>
-    <string name="modpack_empty_hint">Import a .rhp or .zip profile here. Don\'t add archive files as a single mod DLL.</string>
-    <string name="modpack_export">Export</string>
-    <string name="modpack_export_preparing">Preparing export…</string>
-    <string name="modpack_export_progress">Exporting %1$d / %2$d files</string>
-    <string name="modpack_export_cancel">Cancel</string>
-    <string name="modpack_import">Import Profile</string>
-    <string name="modpack_import_dialog_title">Import Profile</string>
-    <string name="modpack_import_dialog_message">Import a prepared profile into the launcher</string>
-    <string name="modpack_import_auto_scan">Auto Scan</string>
-    <string name="modpack_import_manual">Manual Import</string>
-    <string name="modpack_importing">Importing profile…</string>
-    <string name="modpack_import_cancel">Cancel</string>
-    <string name="modpack_invalid_file">Only .rhp or .zip profile files can be imported</string>
-    <string name="modpack_invalid_archive">The archive must contain profile.json</string>
-    <string name="modpack_select_active">Activate</string>
-    <string name="modpack_vanilla">Vanilla (No Mods)</string>
-    <string name="modpack_name_hint">Profile name</string>
-    <string name="modpack_game_version">Compatible game version</string>
-    <string name="modpack_game_version_hint">Leave empty for any version. Separate multiple versions with commas.</string>
-    <string name="modpack_game_version_value">For v%s</string>
-    <string name="modpack_game_version_unset">No compatible version set</string>
-    <string name="modpack_game_version_any">Any version</string>
-    <string name="modpack_game_version_mismatch_title">Version mismatch</string>
-    <string name="modpack_game_version_mismatch_message">This profile targets %1$s, but the current game is %2$s. Import anyway?</string>
-    <string name="modpack_game_version_mismatch_batch">%1$d selected profile(s) target a different version than the current game (%2$s). Import anyway?</string>
-    <string name="modpack_game_version_mismatch_continue">Import anyway</string>
-    <string name="modpack_confirm_delete_title">Delete Profile</string>
-    <string name="modpack_confirm_delete_msg">Delete \"%s\" and all its mods? This cannot be undone.</string>
-    <string name="modpack_created">Created profile: %s</string>
-    <string name="modpack_deleted">Deleted profile: %s</string>
-    <string name="modpack_exported">Exported: %s</string>
-    <string name="modpack_imported">Imported: %s</string>
-    <string name="modpack_scan_downloads">Import from Downloads</string>
-    <string name="modpack_scan_downloads_title">Profiles in Downloads</string>
-    <string name="modpack_scan_downloads_message">Found %d .rhp file(s) in Downloads. Import the selected files?</string>
-    <string name="modpack_scan_downloads_import">Import</string>
-    <string name="modpack_scan_downloads_skip">Not now</string>
-    <string name="modpack_scan_downloads_empty">No .rhp profiles found in Downloads</string>
-    <string name="modpack_scan_downloads_imported">Imported %1$d of %2$d profile(s)</string>
-    <string name="modpack_scan_dlls_title">Mods in Downloads</string>
-    <string name="modpack_scan_dlls_message">Found %d .dll file(s) in Downloads. Import the selected files into this profile?</string>
-    <string name="modpack_scan_dlls_empty">No .dll mods found in Downloads</string>
-    <string name="modpack_scan_dlls_imported">Imported %1$d of %2$d mod(s)</string>
-    <string name="modpack_import_from_other">From another profile</string>
-    <string name="modpack_import_from_other_title">Choose a profile</string>
-    <string name="modpack_import_from_other_empty">No other profiles to import from</string>
-    <string name="modpack_import_from_other_no_mods">This profile has no mods</string>
-    <string name="modpack_import_from_other_mods_title">Mods in %s</string>
-    <string name="modpack_import_from_other_mods_message">Selected mods and their matching configs will be copied into this profile.</string>
-    <string name="modpack_import_from_other_select_all">Select all</string>
-    <string name="modpack_import_from_other_deselect_all">Deselect all</string>
-    <string name="modpack_import_from_other_imported">Imported %1$d of %2$d mod(s) (%3$d config file(s))</string>
-    <string name="modpack_no_mods">No mods in this profile</string>
-    <string name="modpack_add_mod">Add DLL</string>
-    <string name="modpack_invalid_mod_file">Only .dll mod files can be added</string>
-    <string name="modpack_add_mod_archive_hint">ZIP/RHP files are profiles. Use Import Profile on the profile page instead</string>
-    <string name="modpack_browse_mod_files">Browse Mod Files</string>
-    <string name="modpack_browse_mod_files_desc">View all files and directories in this profile</string>
-    <string name="modpack_target_game">For: %s</string>
-    <string name="modpack_mod_count">%d mod(s)</string>
-    <string name="modpack_mod_count_ratio">%1$d / %2$d mods</string>
-    <string name="modpack_active">Active</string>
-    <string name="modpack_mod_rename">Rename Mod</string>
-    <string name="modpack_mod_display_name">Display name</string>
-    <string name="modpack_mod_display_name_hint">Shown in this launcher only. The DLL file name is unchanged.</string>
-    <string name="modpack_mod_file_name">File: %s</string>
-    <string name="modpack_mod_rename_failed">Display name cannot be empty</string>
-    <string name="modpack_mod_category">Category</string>
-    <string name="modpack_mod_category_set">Set category</string>
-    <string name="modpack_mod_category_hint">Optional. Used to filter mods in this pack.</string>
-    <string name="modpack_mod_category_all">All</string>
-    <string name="modpack_mod_category_uncategorized">Uncategorized</string>
-    <string name="modpack_mod_category_existing">Existing categories</string>
-    <string name="modpack_mod_category_clear">Remove</string>
-    <string name="modpack_mod_enable">Load this mod</string>
-    <string name="modpack_mod_disabled">Disabled</string>
-    <string name="modpack_mod_disabled_count">%d disabled</string>
+    /** Cached detection results */
+    private var cachedGames: List<DetectedGame>? = null
+
+    data class DetectedGame(
+        val packageName: String,
+        val label: String,
+        val icon: Drawable?,
+        val versionName: String,
+        val versionCode: Long,
+        val unityVersion: String?,
+        val apkPath: String
+    )
+
+    /**
+     * Scan installed apps and return detected Unity IL2CPP games.
+     */
+    suspend fun detectGames(context: Context): List<DetectedGame> = withContext(Dispatchers.IO) {
+        cachedGames?.let { return@withContext it }
+
+        val pm = context.packageManager
+        val results = mutableListOf<DetectedGame>()
+        val seenPackages = mutableSetOf<String>()
+
+        // Query all launchable activities (works with <queries> intent filter)
+        val launchIntent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+
+        @Suppress("DEPRECATION")
+        val activities = pm.queryIntentActivities(launchIntent, PackageManager.MATCH_ALL)
+
+        BepInExLog.i("Scanning ${activities.size} launchable apps for Unity IL2CPP games...")
+
+        for (resolveInfo in activities) {
+            val packageName = resolveInfo.activityInfo.packageName
+
+            // Deduplicate (some apps have multiple launcher activities)
+            if (packageName in seenPackages) continue
+            seenPackages.add(packageName)
+
+            // Skip our own package
+            if (packageName == context.packageName) continue
+
+            // This build only supports Among Us
+            if (packageName != AMONG_US_PACKAGE) continue
+
+            // Get app info
+            val appInfo = try {
+                pm.getApplicationInfo(packageName, 0)
+            } catch (e: PackageManager.NameNotFoundException) {
+                continue
+            }
+
+            // Skip system apps for performance
+            if ((appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0) continue
+
+            val apkPath = appInfo.sourceDir ?: continue
+            if (!File(apkPath).exists()) continue
+
+            // Check for libil2cpp.so in the APK
+            val hasIl2Cpp = checkForIl2Cpp(apkPath)
+            if (!hasIl2Cpp) {
+                // Also try the native library directory
+                val libCheck = File(appInfo.nativeLibraryDir, "libil2cpp.so")
+                if (!libCheck.exists()) continue
+            }
+
+            // Found a Unity IL2CPP game!
+            val label = pm.getApplicationLabel(appInfo).toString()
+            val icon = try { pm.getApplicationIcon(appInfo) } catch (e: Exception) { null }
+
+            var versionName = "Unknown"
+            var versionCode = 0L
+            try {
+                @Suppress("DEPRECATION")
+                val pkgInfo = pm.getPackageInfo(packageName, 0)
+                versionName = pkgInfo.versionName ?: "Unknown"
+                versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    pkgInfo.longVersionCode
+                } else {
+                    @Suppress("DEPRECATION")
+                    pkgInfo.versionCode.toLong()
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "Failed to get package info for $packageName: ${e.message}")
+            }
+
+            val game = DetectedGame(
+                packageName = packageName,
+                label = label,
+                icon = icon,
+                versionName = versionName,
+                versionCode = versionCode,
+                unityVersion = null,
+                apkPath = apkPath
+            )
+
+            BepInExLog.i("Detected: $label ($packageName) v$versionName")
+            results.add(game)
+        }
+
+        BepInExLog.i("Found ${results.size} Unity IL2CPP game(s)")
+
+        cachedGames = results
+        results
+    }
+
+    /**
+     * Open an APK as a ZIP and check for libil2cpp.so in any ABI directory.
+     */
+    private fun checkForIl2Cpp(apkPath: String): Boolean {
+        try {
+            ZipFile(apkPath).use { zip ->
+                for (abi in UNITY_ABIS) {
+                    val entry = zip.getEntry("lib/$abi/libil2cpp.so")
+                    if (entry != null && !entry.isDirectory) return true
+                }
+            }
+        } catch (e: Exception) {
+            Log.d(TAG, "Cannot scan APK: $apkPath — ${e.message}")
+        }
+        return false
+    }
+
+    fun invalidateCache() {
+        cachedGames = null
+    }
+}/string>
     <string name="modpack_mod_sort">Sort</string>
     <string name="modpack_mod_sort_name">Display name</string>
     <string name="modpack_mod_sort_file">File name</string>
