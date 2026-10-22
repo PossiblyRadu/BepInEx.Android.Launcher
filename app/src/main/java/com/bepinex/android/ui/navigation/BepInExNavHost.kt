@@ -25,6 +25,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FolderZip
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.AlertDialog
@@ -481,7 +482,7 @@ fun BepInExNavHost(
 
     val showBottomBar = currentRoute == NavRoutes.MAIN
 
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    val pagerState = rememberPagerState(pageCount = { 4 })
 
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
@@ -735,6 +736,7 @@ fun BepInExNavHost(
                                     onLanguageIncompleteShown = { AppSettings.setLanguageIncompleteShown(settingsContext, true) }
                                 )
                             }
+                            3 -> LobbyScreen(gameVersionName = selectedGame?.versionName.orEmpty())
                         }
                     }
                 }
@@ -1203,6 +1205,12 @@ fun BepInExNavHost(
                         icon = { Icon(Icons.Filled.Settings, stringResource(R.string.nav_settings)) },
                         label = { Text(stringResource(R.string.nav_settings)) }
                     )
+                    NavigationRailItem(
+                        selected = pagerState.currentPage == 3,
+                        onClick = { composeScope.launch { if (animationDisabled) pagerState.scrollToPage(3) else pagerState.animateScrollToPage(3) } },
+                        icon = { Icon(Icons.Filled.Public, stringResource(R.string.nav_lobbies)) },
+                        label = { Text(stringResource(R.string.nav_lobbies)) }
+                    )
                 }
                 Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                     navContent()
@@ -1267,6 +1275,19 @@ fun BepInExNavHost(
                 enabled = selectedGame != null,
                 icon = { Icon(Icons.Filled.Settings, stringResource(R.string.nav_settings)) },
                 label = { Text(stringResource(R.string.nav_settings)) }
+            )
+            NavigationBarItem(
+                selected = pagerState.currentPage == 3,
+                onClick = {
+                    if (pagerState.currentPage != 3) {
+                        composeScope.launch {
+                            if (animationDisabled) pagerState.scrollToPage(3)
+                            else pagerState.animateScrollToPage(3)
+                        }
+                    }
+                },
+                icon = { Icon(Icons.Filled.Public, stringResource(R.string.nav_lobbies)) },
+                label = { Text(stringResource(R.string.nav_lobbies)) }
             )
         }
     }
